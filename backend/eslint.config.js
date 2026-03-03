@@ -1,0 +1,48 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+import js from '@eslint/js';
+import globals from 'globals';
+import { FlatCompat } from '@eslint/eslintrc';
+import { defineConfig, globalIgnores } from 'eslint/config';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const compat = new FlatCompat({ baseDirectory: __dirname });
+
+export default defineConfig([
+  globalIgnores(['dist', '.venv']),
+  ...compat.extends('google', 'plugin:prettier/recommended'),
+  {
+    files: ['**/*.js'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.node,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+    rules: {
+      // Disable deprecated Google rules removed in ESLint v9.
+      'valid-jsdoc': 'off',
+      'require-jsdoc': 'off',
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+    },
+  },
+  {
+    files: ['server/**/*.js'],
+    rules: {
+      'new-cap': ['error', { capIsNew: false }],
+    },
+  },
+  {
+    files: ['tests/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      },
+    },
+  },
+]);

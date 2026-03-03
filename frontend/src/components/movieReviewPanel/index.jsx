@@ -1,0 +1,47 @@
+// Import the review card child component to fill the panel
+import { ReviewCard } from '../reviewCard';
+
+// Import the movie review panel css styling
+import { StyledEmptyMessage, StyledReviewItem, StyledReviewList } from './style';
+
+/**
+ * MovieReviewPanel - Displays all reviews for a movie
+ *                    This is all the reviews for this movie,
+ *                    shown on the movie's page
+ *                    Similar pattern to MovieCarousel
+ *                    receives array, maps to ReviewCard
+ * Props:
+ * - reviewsArray: Array of review objects
+ * - currentUserId: The logged-in user's ID (to determine ownership for edit/delete)
+ * - onEdit: Callback when Edit button is clicked on a review
+ * - onDelete: Callback when Delete button is clicked on a review
+ */
+export function MovieReviewPanel({ reviewsArray, currentUserId, onEdit, onDelete }) {
+  if (!reviewsArray || reviewsArray.length === 0) {
+    return <StyledEmptyMessage>No reviews yet. Be the first to review!</StyledEmptyMessage>;
+  }
+
+  return (
+    <StyledReviewList>
+      {reviewsArray.map((review) => {
+        // Determine if current user owns this review
+        const reviewUserId = review.user_id || review.userId || review.user?.id;
+        const isOwner = currentUserId && reviewUserId === currentUserId;
+
+        return (
+          <StyledReviewItem key={review.id || review._id}>
+            <ReviewCard
+              review={review}
+              userId={reviewUserId}
+              showAuthor={true}
+              isOwner={isOwner}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              datePrefix="Watched on "
+            />
+          </StyledReviewItem>
+        );
+      })}
+    </StyledReviewList>
+  );
+}
