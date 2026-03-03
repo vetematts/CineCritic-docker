@@ -15,7 +15,8 @@ RUN npm install
 # Copy source code; excluded files managed via .dockerignore
 COPY . .
 
-# Match port definition in src/server.js
-EXPOSE 5000
+# Match Vite's default development port
+EXPOSE 5173
 
-CMD ["npm", "start"]
+# Run the Vite development server
+CMD ["npm", "run", "dev"]
