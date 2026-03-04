@@ -1,11 +1,11 @@
 services:
   frontend:
-    image: cinecritic-frontend:v1.0-dev
+    image: cinecritic-frontend:${APP_VERSION:-v1.0}-${APP_ENV:-dev}
     build:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
-      VITE_API_BASE_URL: http://localhost:4000
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}
     ports:
       - "5173:5173"
     depends_on:
@@ -14,17 +14,17 @@ services:
       - cinecritic-network
 
   backend:
-    image: cinecritic-backend:v1.0-dev
+    image: cinecritic-backend:${APP_VERSION:-v1.0}-${APP_ENV:-dev}
     build:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      NODE_ENV: development
-      PORT: 4000
-      DATABASE_URL: postgres://cinecritic:cinecritic@db:5432/cinecritic
-      JWT_SECRET: dev_jwt_secret_change_me
-      TMDB_API_KEY: your_tmdb_api_key
-      DATABASE_SSL: "false"
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${BACKEND_PORT:-4000}
+      DATABASE_URL: ${DATABASE_URL:-postgres://cinecritic_app:replace_with_strong_dev_password@db:5432/cinecritic}
+      JWT_SECRET: ${JWT_SECRET:-replace_with_strong_jwt_secret}
+      TMDB_API_KEY: ${TMDB_API_KEY:-your_tmdb_api_key}
+      DATABASE_SSL: ${DATABASE_SSL:-false}
     ports:
       - "4000:4000"
     depends_on:
@@ -37,13 +37,17 @@ services:
     image: postgres:16-alpine
     container_name: cinecritic-db
     environment:
-      POSTGRES_DB: cinecritic
-      POSTGRES_USER: cinecritic
-      POSTGRES_PASSWORD: cinecritic
+      POSTGRES_DB: ${POSTGRES_DB:-cinecritic}
+      POSTGRES_USER: ${POSTGRES_USER:-cinecritic_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-replace_with_strong_dev_password}
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cinecritic -d cinecritic"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-cinecritic_app} -d ${POSTGRES_DB:-cinecritic}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
