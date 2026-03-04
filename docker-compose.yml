@@ -1,0 +1,56 @@
+services:
+  frontend:
+    image: cinecritic-frontend:v1.0-dev
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_BASE_URL: http://localhost:4000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - cinecritic-network
+
+  backend:
+    image: cinecritic-backend:v1.0-dev
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgres://cinecritic:cinecritic@db:5432/cinecritic
+      JWT_SECRET: dev_jwt_secret_change_me
+      TMDB_API_KEY: your_tmdb_api_key
+      DATABASE_SSL: "false"
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - cinecritic-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: cinecritic-db
+    environment:
+      POSTGRES_DB: cinecritic
+      POSTGRES_USER: cinecritic
+      POSTGRES_PASSWORD: cinecritic
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cinecritic -d cinecritic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - cinecritic-network
+
+networks:
+  cinecritic-network:
+    driver: bridge

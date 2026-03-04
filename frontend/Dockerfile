@@ -18,5 +18,5 @@ COPY . .
 # Match Vite's default development port
 EXPOSE 5173
 
-# Run the Vite development server
-CMD ["npm", "run", "dev"]
+# Run the Vite development server on all interfaces for container access
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
