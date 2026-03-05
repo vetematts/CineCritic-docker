@@ -16,6 +16,6 @@ RUN npm install
 COPY . .
 
 # Match port definition in src/server.js
-EXPOSE 5000
+EXPOSE 4000
 
 CMD ["npm", "start"]
