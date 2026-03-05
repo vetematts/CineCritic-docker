@@ -42,6 +42,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-replace_with_strong_dev_password}
     ports:
       - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
     healthcheck:
       test:
         [
@@ -58,3 +60,6 @@ services:
 networks:
   cinecritic-network:
     driver: bridge
+
+volumes:
+  db_data:
