@@ -5,5 +5,12 @@ dist
 .git
 .github
 .env
+.env.*
 Dockerfile
 .dockerignore
+tests
+*.md
+.gitignore
+.prettierrc
+eslint.config.js
+coverage
