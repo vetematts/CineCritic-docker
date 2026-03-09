@@ -94,6 +94,16 @@ describe('health', () => {
   });
 
   test('database health check returns connected status', async () => {
+    const pool = (await import('../src/models/database.js')).default;
+    const querySpy = jest.spyOn(pool, 'query').mockResolvedValue({
+      rows: [
+        {
+          timestamp: '2026-01-01T00:00:00.000Z',
+          version: 'PostgreSQL 16.0 on x86_64-pc-linux-gnu',
+        },
+      ],
+    });
+
     const req = createRequest({ method: 'GET', url: '/api/health/database' });
     const res = createResponse();
     const { default: app } = await import('../src/index.js');
@@ -109,6 +119,8 @@ describe('health', () => {
     expect(body.database).toBe('connected');
     expect(body.timestamp).toBeDefined();
     expect(body.version).toBeDefined();
+
+    querySpy.mockRestore();
   });
 });
 
