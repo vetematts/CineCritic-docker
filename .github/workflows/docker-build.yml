@@ -8,6 +8,11 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://test_user:test_password@localhost:5432/cinecritic_test
+      JWT_SECRET: test_jwt_secret
+      TMDB_API_KEY: test_tmdb_api_key
 
     steps:
       - uses: actions/checkout@v4
