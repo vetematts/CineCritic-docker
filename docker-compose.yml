@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: cinecritic-frontend:${APP_VERSION:-v1.0}-${APP_ENV:-dev}
+    image: cinecritic-frontend:${APP_VERSION:-v1.0}-${APP_ENV:-dev}-${GIT_COMMIT:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -14,7 +14,7 @@ services:
       - cinecritic-network
 
   backend:
-    image: cinecritic-backend:${APP_VERSION:-v1.0}-${APP_ENV:-dev}
+    image: cinecritic-backend:${APP_VERSION:-v1.0}-${APP_ENV:-dev}-${GIT_COMMIT:-local}
     build:
       context: ./backend
       dockerfile: Dockerfile
