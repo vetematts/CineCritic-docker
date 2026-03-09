@@ -14,7 +14,7 @@ vi.mock('react-router', () => ({
   ),
 }));
 
-import { SearchBar } from '../src/components/searchBar';
+import { SearchBar } from '../src/components/searchbar';
 
 test('submits search term and navigates to search results', async () => {
   render(
