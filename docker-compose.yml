@@ -1,10 +1,12 @@
 services:
   frontend:
+    # Include version, environment, and commit in the image tag for traceability.
     image: cinecritic-frontend:${APP_VERSION:-v1.0}-${APP_ENV:-dev}-${GIT_COMMIT:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
+      # Frontend runs in the browser, so this must be a host-reachable API URL.
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}
     ports:
       - "5173:5173"
@@ -14,6 +16,7 @@ services:
       - cinecritic-network
 
   backend:
+    # Keep backend tags aligned with frontend tags for consistent versioning.
     image: cinecritic-backend:${APP_VERSION:-v1.0}-${APP_ENV:-dev}-${GIT_COMMIT:-local}
     build:
       context: ./backend
@@ -43,8 +46,10 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      # Persist PostgreSQL data across container recreation and rebuilds.
       - db_data:/var/lib/postgresql/data
     healthcheck:
+      # Mark the database healthy only after it accepts connections.
       test:
         [
           "CMD-SHELL",
@@ -59,7 +64,9 @@ services:
 
 networks:
   cinecritic-network:
+    # Bridge network provides service-name DNS between containers.
     driver: bridge
 
 volumes:
+  # Named volume stores database state outside the container filesystem.
   db_data:

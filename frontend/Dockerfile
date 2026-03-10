@@ -1,22 +1,22 @@
-# Use Alpine-based image for reduced attack surface and footprint
+# Use a small Node base image to reduce pull time and attack surface.
 FROM node:lts-alpine
 
-# Set execution environment to development mode
+# Set the runtime environment explicitly.
 ENV NODE_ENV=development
 
 WORKDIR /usr/src/app
 
-# Copy definitions first to leverage layer caching for faster subsequent builds
+# Copy dependency manifests first to maximise Docker layer cache reuse.
 COPY package*.json ./
 
-# Install dependencies within the container environment
+# Install all dependencies required by the Vite development server.
 RUN npm install
 
-# Copy source code; excluded files managed via .dockerignore
+# Copy application source after dependencies are installed.
 COPY . .
 
-# Match Vite's default development port
+# Expose the frontend development server port.
 EXPOSE 5173
 
-# Run the Vite development server on all interfaces for container access
+# Bind to all interfaces so host port mapping can reach the dev server.
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

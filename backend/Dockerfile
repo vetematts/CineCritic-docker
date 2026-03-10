@@ -1,21 +1,22 @@
-# Use Alpine-based image for reduced attack surface and footprint
+# Use a small Node base image to reduce pull time and attack surface.
 FROM node:lts-alpine
 
-# Set execution environment to development mode
+# Set the runtime environment explicitly.
 ENV NODE_ENV=development
 
 WORKDIR /usr/src/app
 
-# Copy definitions first to leverage layer caching for faster subsequent builds
+# Copy dependency manifests first to maximise Docker layer cache reuse.
 COPY package*.json ./
 
-# Install dependencies within the container environment
+# Install all dependencies required for local development commands.
 RUN npm install
 
-# Copy source code; excluded files managed via .dockerignore
+# Copy application source after dependencies are installed.
 COPY . .
 
-# Match port definition in src/server.js
+# Expose the API port used by the Node server.
 EXPOSE 4000
 
+# Start the API with the standard npm entrypoint.
 CMD ["npm", "start"]
