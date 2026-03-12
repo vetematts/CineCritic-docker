@@ -9,6 +9,7 @@ Container orchestration for the CineCritic frontend, backend, and PostgreSQL dat
 - [Prerequisites](#-prerequisites)
 - [Install Instructions](#-install-instructions)
 - [Commands](#-commands)
+- [Database Seed](#-database-seed)
 - [Access URLs](#-access-urls)
 - [Environment Variables](#-environment-variables)
 - [CI](#-ci)
@@ -64,6 +65,16 @@ docker compose version
 - `docker compose down` - stop and remove containers/networks
 - `docker compose logs -f` - view logs
 - `docker compose ps` - show service status and ports
+
+## 🌱 Database Seed
+
+Run the seed after containers are running:
+
+```bash
+docker compose run --rm backend npm run seed
+```
+
+Use this as a manual one-off command. It does not run during image build.
 
 ## 🚀 Access URLs
 
