@@ -1,5 +1,5 @@
 # Use a small Node base image to reduce pull time and attack surface.
-FROM node:lts-alpine
+FROM node:24-alpine3.21
 
 # Set the runtime environment explicitly.
 ENV NODE_ENV=development
