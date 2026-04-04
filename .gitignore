@@ -11,6 +11,9 @@ coverage/
 *.lcov
 .nyc_output
 
+# Local copies of CI log output (workflow uploads artifacts on GitHub)
+ci-artifacts/
+
 # Dependencies
 node_modules/
 

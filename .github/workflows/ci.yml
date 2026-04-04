@@ -13,6 +13,7 @@ jobs:
     env:
       NODE_ENV: test
       DATABASE_URL: postgres://test_user:test_password@localhost:5432/cinecritic_test
+      DATABASE_SSL: "false"
       JWT_SECRET: test_jwt_secret
       TMDB_API_KEY: test_tmdb_api_key
 
@@ -27,17 +28,20 @@ jobs:
             frontend/package-lock.json
             backend/package-lock.json
 
+      - name: Prepare log directory
+        run: mkdir -p ci-artifacts/test-logs
+
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
 
       - name: Lint frontend
         working-directory: frontend
-        run: npm run lint
+        run: npm run lint 2>&1 | tee ../ci-artifacts/test-logs/frontend-lint.log
 
       - name: Test frontend
         working-directory: frontend
-        run: npm test
+        run: npm test -- --run --reporter=verbose 2>&1 | tee ../ci-artifacts/test-logs/frontend-vitest.log
 
       - name: Install backend deps
         working-directory: backend
@@ -45,8 +49,28 @@ jobs:
 
       - name: Lint backend
         working-directory: backend
-        run: npm run lint
+        run: npm run lint 2>&1 | tee ../ci-artifacts/test-logs/backend-lint.log
 
       - name: Test backend
         working-directory: backend
-        run: npm test
+        run: npm test 2>&1 | tee ../ci-artifacts/test-logs/backend-jest.log
+
+      - name: Write test run summary
+        if: always()
+        run: |
+          {
+            echo "# CI test run"
+            echo "- Ref: ${GITHUB_REF}"
+            echo "- SHA: ${GITHUB_SHA}"
+            echo "- Run: ${GITHUB_RUN_ID}"
+            echo ""
+            echo "Artifacts under \`ci-artifacts/test-logs/\` include lint and test output for frontend and backend."
+          } > ci-artifacts/test-logs/README.md
+
+      - name: Upload test and lint logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-test-logs
+          path: ci-artifacts/test-logs/
+          retention-days: 30
