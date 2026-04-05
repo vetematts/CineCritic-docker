@@ -7,6 +7,10 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+concurrency:
+  group: docker-build-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,12 +20,13 @@ jobs:
       NODE_ENV: development
       POSTGRES_DB: cinecritic
       POSTGRES_USER: cinecritic_app
+      # Build-only: compose does not run containers; placeholders keep PRs working without repo secrets.
+      POSTGRES_PASSWORD: ci_build_placeholder
       VITE_API_BASE_URL: http://localhost:4000
       DATABASE_SSL: "false"
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      DATABASE_URL: postgres://cinecritic_app:${{ secrets.POSTGRES_PASSWORD }}@db:5432/cinecritic
+      JWT_SECRET: ci_build_placeholder
+      TMDB_API_KEY: ci_build_placeholder
+      DATABASE_URL: postgres://cinecritic_app:ci_build_placeholder@db:5432/cinecritic
 
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +34,31 @@ jobs:
       - name: Set image tag
         run: echo "GIT_COMMIT=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
+      - name: Prepare build log directory
+        run: mkdir -p ci-artifacts/docker-build
+
       - uses: docker/setup-buildx-action@v3
 
       - name: Build images
-        run: docker compose build
+        run: docker compose build --progress=plain 2>&1 | tee ci-artifacts/docker-build/compose-build.log
+
+      - name: List built images
+        run: docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}" | tee ci-artifacts/docker-build/images.txt
+
+      - name: Add build summary
+        if: always()
+        run: |
+          {
+            echo "# Docker build"
+            echo "- GIT_COMMIT: ${GIT_COMMIT}"
+            echo "- APP_VERSION: ${APP_VERSION} APP_ENV: ${APP_ENV}"
+            echo "- Expected tags: \`cinecritic-frontend:${APP_VERSION}-${APP_ENV}-${GIT_COMMIT}\`, \`cinecritic-backend:${APP_VERSION}-${APP_ENV}-${GIT_COMMIT}\`"
+          } | tee ci-artifacts/docker-build/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-build-logs
+          path: ci-artifacts/docker-build/
+          retention-days: 30

@@ -106,12 +106,12 @@ Core variables:
 
 ## CI
 
-GitHub Actions requires these repository secrets:
+Workflows:
 
-- `JWT_SECRET`
-- `TMDB_API_KEY`
-- `POSTGRES_PASSWORD`
+- **CI** — lint and test (frontend and backend); uploads **`ci-test-logs`** artifacts on each run.
+- **Docker Build** — `docker compose build` to verify images; uses **placeholder** env values so **pull requests do not need secrets** (build does not start the database). Uploads **`docker-build-logs`**.
+- **Docker Publish** — after **CI** succeeds on `main`/`master`, builds and pushes images to **GitHub Container Registry** (`ghcr.io`), or run manually from **Actions**.
 
-Path: **Settings -> Secrets and variables -> Actions**
+For **local** runs, set `JWT_SECRET`, `TMDB_API_KEY`, and `POSTGRES_PASSWORD` in `.env` (see `.env.example`). Add the same as **repository secrets** if a workflow or deploy step you add later needs them; **Docker Build** and **Docker Publish** (as configured here) do not require those secrets.
 
-Workflow triggers on push to `main`/`master` and via manual run in **Actions -> Docker build -> Run workflow**.
+Path: **Settings → Secrets and variables → Actions**
