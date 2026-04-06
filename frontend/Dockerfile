@@ -15,8 +15,8 @@ RUN npm install
 # Copy application source after dependencies are installed.
 COPY . .
 
-# Expose the frontend development server port.
+# Expose the frontend development server port (local default; Cloud Run sets PORT).
 EXPOSE 5173
 
-# Bind to all interfaces so host port mapping can reach the dev server.
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Bind to all interfaces. Use PORT when set (e.g. Cloud Run), else 5173 for local Compose.
+CMD ["sh", "-c", "npm run dev -- --host 0.0.0.0 --port ${PORT:-5173}"]

@@ -1,0 +1,91 @@
+# Manual deploy only — does not run on push. Add GCP + app secrets under repo Settings → Secrets.
+name: Deploy Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      gcp_region:
+        description: GCP region (e.g. australia-southeast1)
+        type: string
+        required: true
+        default: australia-southeast1
+      image_tag:
+        description: GHCR tag to deploy (usually latest or sha-xxxxxxxx)
+        type: string
+        required: true
+        default: latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy backend
+        env:
+          DATABASE_URL: ${{ secrets.RUN_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.RUN_JWT_SECRET }}
+          TMDB_API_KEY: ${{ secrets.RUN_TMDB_API_KEY }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          IMAGE="ghcr.io/${OWNER}/cinecritic-backend:${{ github.event.inputs.image_tag }}"
+          gcloud run deploy cinecritic-backend \
+            --project "$GCP_PROJECT_ID" \
+            --image "$IMAGE" \
+            --region "${{ github.event.inputs.gcp_region }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "^@^DATABASE_URL=${DATABASE_URL}@JWT_SECRET=${JWT_SECRET}@TMDB_API_KEY=${TMDB_API_KEY}@NODE_ENV=development@DATABASE_SSL=false"
+
+      - name: Backend service URL
+        id: backend_url
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          URL=$(gcloud run services describe cinecritic-backend \
+            --project "$GCP_PROJECT_ID" \
+            --region "${{ github.event.inputs.gcp_region }}" \
+            --format 'value(status.url)')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Backend URL: $URL" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deploy frontend
+        env:
+          VITE_API_BASE_URL: ${{ steps.backend_url.outputs.url }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          IMAGE="ghcr.io/${OWNER}/cinecritic-frontend:${{ github.event.inputs.image_tag }}"
+          gcloud run deploy cinecritic-frontend \
+            --project "$GCP_PROJECT_ID" \
+            --image "$IMAGE" \
+            --region "${{ github.event.inputs.gcp_region }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "VITE_API_BASE_URL=${VITE_API_BASE_URL}"
+
+      - name: Frontend service URL
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          URL=$(gcloud run services describe cinecritic-frontend \
+            --project "$GCP_PROJECT_ID" \
+            --region "${{ github.event.inputs.gcp_region }}" \
+            --format 'value(status.url)')
+          echo "Frontend URL: $URL" >> "$GITHUB_STEP_SUMMARY"
