@@ -7,12 +7,14 @@ Container orchestration for the CineCritic frontend, backend, and PostgreSQL dat
 - [Repositories](#-repositories)
 - [Service Architecture](#-service-architecture)
 - [Prerequisites](#-prerequisites)
+- [Hardware Requirements](#-hardware-requirements)
 - [Install Instructions](#-install-instructions)
 - [Commands](#-commands)
 - [Database Seed](#-database-seed)
 - [Access URLs](#-access-urls)
 - [Environment Variables](#-environment-variables)
 - [CI](#-ci)
+- [Technology Choices and Alternatives](#-technology-choices-and-alternatives)
 
 ## 📂 Repositories
 
@@ -44,6 +46,12 @@ Verify Docker:
 docker --version
 docker compose version
 ```
+
+## 💻 Hardware Requirements
+
+- CPU: modern dual-core (or better)
+- RAM: 4 GB minimum (8 GB recommended for running frontend + backend + Postgres)
+- Disk: ~1 GB for Docker images, plus database volume growth over time
 
 ## 🛠️ Install Instructions
 
@@ -133,3 +141,29 @@ Path: **Settings → Secrets and variables → Actions**
 4. **Run workflow** — **Actions → Deploy Cloud Run → Run workflow** (choose region and image tag, usually `latest`).
 
 The frontend service gets **`VITE_API_BASE_URL`** set automatically to the **backend** Cloud Run URL after the backend deploy step. If `DATABASE_URL` contains characters that break `gcloud --set-env-vars`, use **Secret Manager** bindings instead and adjust the workflow.
+
+## 🧭 Technology Choices and Alternatives
+
+### Docker + Docker Compose
+
+- **Purpose:** Standard local orchestration for running a multi-service app (frontend, API, database) together.
+- **Why chosen:** Simple, repeatable environment; service-name networking; easy for assessors/devs to run.
+- **Alternatives:** Run services directly on the host; Kubernetes (too heavy for this scope).
+
+### GitHub Actions (CI/CD)
+
+- **Purpose:** Run lint/tests, verify container builds, publish images, and optionally deploy.
+- **Why chosen:** Native to GitHub repos, fast setup, good ecosystem (Docker + Google actions), clear audit trail.
+- **Alternatives:** GitLab CI, Jenkins, CircleCI.
+
+### Container registry (GHCR)
+
+- **Purpose:** Store built images (`cinecritic-frontend`, `cinecritic-backend`) for deployment.
+- **Why chosen:** Integrated auth with GitHub Actions; simple tagging with commit SHAs.
+- **Alternatives:** Docker Hub, Google Artifact Registry (recommended if you want everything inside GCP).
+
+### Google Cloud Run (deployment target)
+
+- **Purpose:** Deploy containers without managing servers.
+- **Why chosen:** Straightforward container deploy, autoscaling, and easy rollbacks via revisions.
+- **Alternatives:** GCE/EC2 (more ops), Kubernetes (more complexity).
