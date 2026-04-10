@@ -50,7 +50,7 @@ jobs:
             --region "${{ github.event.inputs.gcp_region }}" \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "^@^DATABASE_URL=${DATABASE_URL}@JWT_SECRET=${JWT_SECRET}@TMDB_API_KEY=${TMDB_API_KEY}@NODE_ENV=development@DATABASE_SSL=false"
+            --set-env-vars "^@^DATABASE_URL=${DATABASE_URL}@JWT_SECRET=${JWT_SECRET}@TMDB_API_KEY=${TMDB_API_KEY}@NODE_ENV=production@DATABASE_SSL=false"
 
       - name: Backend service URL
         id: backend_url
