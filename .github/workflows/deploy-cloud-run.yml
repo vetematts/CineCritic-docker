@@ -1,4 +1,4 @@
-# Manual deploy only — does not run on push. Add GCP + app secrets under repo Settings → Secrets.
+# Manual production deployment only. This workflow does not run on push.
 name: Deploy Cloud Run
 
 on:
@@ -20,6 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      BACKEND_SERVICE_NAME: cinecritic-backend
+      FRONTEND_SERVICE_NAME: cinecritic-frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +47,7 @@ jobs:
           set -euo pipefail
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE="ghcr.io/${OWNER}/cinecritic-backend:${{ github.event.inputs.image_tag }}"
-          gcloud run deploy cinecritic-backend \
+          gcloud run deploy "$BACKEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
             --image "$IMAGE" \
             --region "${{ github.event.inputs.gcp_region }}" \
@@ -57,7 +60,7 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
-          URL=$(gcloud run services describe cinecritic-backend \
+          URL=$(gcloud run services describe "$BACKEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
             --region "${{ github.event.inputs.gcp_region }}" \
             --format 'value(status.url)')
@@ -72,7 +75,7 @@ jobs:
           set -euo pipefail
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE="ghcr.io/${OWNER}/cinecritic-frontend:${{ github.event.inputs.image_tag }}"
-          gcloud run deploy cinecritic-frontend \
+          gcloud run deploy "$FRONTEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
             --image "$IMAGE" \
             --region "${{ github.event.inputs.gcp_region }}" \
@@ -84,7 +87,7 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
-          URL=$(gcloud run services describe cinecritic-frontend \
+          URL=$(gcloud run services describe "$FRONTEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
             --region "${{ github.event.inputs.gcp_region }}" \
             --format 'value(status.url)')
