@@ -3,11 +3,8 @@ import { config } from './config/index.js';
 
 app.listen(config.port, () => {
   const baseUrl = `http://localhost:${config.port}`;
-  console.log(`API:     ${baseUrl}`);
-  console.log(`Docs:    ${baseUrl}/docs`);
-  console.log(`Health:  ${baseUrl}/health`);
-  console.log(`DB:      ${baseUrl}/api/health/database`);
-  console.log('Frontend: http://localhost:5173');
+  console.log(`API:  ${baseUrl}`);
+  console.log(`Docs: ${baseUrl}/docs`);
 });
 
 process.on('unhandledRejection', (reason) => {
