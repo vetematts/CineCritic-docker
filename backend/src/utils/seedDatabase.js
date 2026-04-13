@@ -214,11 +214,29 @@ async function seed() {
     { tmdbId: 10751, name: 'Family' },
   ]);
 
+  const uncutGemsId = await upsertMovie({
+    tmdbId: 473033,
+    title: 'Uncut Gems',
+    releaseYear: 2019,
+    posterUrl: null,
+  });
+  await setMovieGenres(uncutGemsId, [
+    { tmdbId: 18, name: 'Drama' },
+    { tmdbId: 53, name: 'Thriller' },
+  ]);
+
   await addReview({
     userId: adminId,
     movieId: fightClubId,
     rating: 4.5,
     body: 'A modern classic.',
+  });
+
+  await addReview({
+    userId: adminId,
+    movieId: uncutGemsId,
+    rating: 5.0,
+    body: 'users who rate this lower than 5 stars will be banned',
   });
 
   await addReview({

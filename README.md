@@ -14,6 +14,7 @@ Container orchestration for the CineCritic frontend, backend, and PostgreSQL dat
 - [Access URLs](#-access-urls)
 - [Environment Variables](#-environment-variables)
 - [CI](#-ci)
+- [Deployment Flow](#-deployment-flow)
 - [Technology Choices and Alternatives](#-technology-choices-and-alternatives)
 
 ## 📂 Repositories
@@ -119,7 +120,18 @@ Workflows:
 - **CI** — lint and test (frontend and backend); uploads **`ci-test-logs`** artifacts on each run.
 - **Docker Build** — `docker compose build` to verify images; uses **placeholder** env values so **pull requests do not need secrets** (build does not start the database). Uploads **`docker-build-logs`**.
 - **Docker Publish** — after **CI** succeeds on `main`/`master`, builds and pushes images to **GitHub Container Registry** (`ghcr.io`), or run manually from **Actions**.
-- **Deploy Cloud Run** — **manual only** (`workflow_dispatch`). After GCP and secrets are configured, deploys backend then frontend from GHCR. See [Deploy to Cloud Run](#deploy-to-cloud-run-when-you-are-ready).
+- **Deploy Cloud Run** — **manual only** (`workflow_dispatch`). Deploys the published images to Cloud Run using production runtime variables.
+
+## Deployment Flow
+
+The pipeline is split into separate stages:
+
+1. **CI** validates the frontend and backend with linting and tests.
+2. **Docker Build** verifies that the container images build correctly on a Linux runner.
+3. **Docker Publish** pushes versioned images to **GHCR** after validation succeeds.
+4. **Deploy Cloud Run** is triggered manually when a production deployment is required.
+
+Cloud Run deployment is kept manual so the application can be fully prepared and verified without creating unnecessary cloud runtime costs during normal development.
 
 For **local** runs, set `JWT_SECRET`, `TMDB_API_KEY`, and `POSTGRES_PASSWORD` in `.env` (see `.env.example`). Add the same as **repository secrets** if a workflow or deploy step you add later needs them; **Docker Build** and **Docker Publish** (as configured here) do not require those secrets.
 
