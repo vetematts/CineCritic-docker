@@ -2,8 +2,12 @@ import app from './index.js';
 import { config } from './config/index.js';
 
 app.listen(config.port, () => {
-  console.log(`API listening on port ${config.port}`);
-  console.log(`Swagger UI: http://localhost:${config.port}/docs`);
+  const baseUrl = `http://localhost:${config.port}`;
+  console.log('CineCritic backend ready');
+  console.log(`API:     ${baseUrl}`);
+  console.log(`Docs:    ${baseUrl}/docs`);
+  console.log(`Health:  ${baseUrl}/health`);
+  console.log(`DB:      ${baseUrl}/api/health/database`);
 });
 
 process.on('unhandledRejection', (reason) => {
