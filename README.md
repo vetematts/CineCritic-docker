@@ -19,7 +19,7 @@ Container orchestration for the CineCritic frontend, backend, and PostgreSQL dat
 
 ## 📂 Repositories
 
-- Docker orchestration: https://github.com/vetematts/CineCritic-docker
+- Docker orchestration: https://github.com/vetematts/CineCritic
 
 ## 🧱 Service Architecture
 
