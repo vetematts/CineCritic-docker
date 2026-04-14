@@ -59,6 +59,15 @@ jobs:
         working-directory: backend
         run: npm test 2>&1 | tee ../ci-artifacts/test-logs/backend-jest.log
 
+      - name: Upload backend test report (JUnit XML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/test-results.xml
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Write test run summary
         if: always()
         run: |
