@@ -4,6 +4,10 @@ name: Deploy Cloud Run
 on:
   workflow_dispatch:
     inputs:
+      target_environment:
+        description: GitHub environment to deploy to
+        type: environment
+        required: true
       gcp_region:
         description: GCP region (e.g. australia-southeast1)
         type: string
@@ -18,6 +22,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target_environment }}
     permissions:
       contents: read
     env:
@@ -25,6 +30,9 @@ jobs:
       FRONTEND_SERVICE_NAME: cinecritic-frontend
       GCP_AR_REGION: ${{ secrets.GCP_ARTIFACT_REGISTRY_REGION }}
       GCP_AR_REPOSITORY: ${{ secrets.GCP_ARTIFACT_REGISTRY_REPOSITORY }}
+      DEPLOY_ENVIRONMENT: ${{ github.event.inputs.target_environment }}
+      DEPLOY_REGION: ${{ github.event.inputs.gcp_region }}
+      IMAGE_TAG: ${{ github.event.inputs.image_tag }}
 
     steps:
       - uses: actions/checkout@v4
@@ -48,11 +56,11 @@ jobs:
         run: |
           set -euo pipefail
           AR_HOST="${GCP_AR_REGION}-docker.pkg.dev"
-          IMAGE="${AR_HOST}/${GCP_PROJECT_ID}/${GCP_AR_REPOSITORY}/cinecritic-backend:${{ github.event.inputs.image_tag }}"
+          IMAGE="${AR_HOST}/${GCP_PROJECT_ID}/${GCP_AR_REPOSITORY}/cinecritic-backend:${IMAGE_TAG}"
           gcloud run deploy "$BACKEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
             --image "$IMAGE" \
-            --region "${{ github.event.inputs.gcp_region }}" \
+            --region "$DEPLOY_REGION" \
             --platform managed \
             --allow-unauthenticated \
             --set-env-vars "^@^DATABASE_URL=${DATABASE_URL}@JWT_SECRET=${JWT_SECRET}@TMDB_API_KEY=${TMDB_API_KEY}@NODE_ENV=production@DATABASE_SSL=false"
@@ -64,7 +72,7 @@ jobs:
         run: |
           URL=$(gcloud run services describe "$BACKEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
-            --region "${{ github.event.inputs.gcp_region }}" \
+            --region "$DEPLOY_REGION" \
             --format 'value(status.url)')
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "Backend URL: $URL" >> "$GITHUB_STEP_SUMMARY"
@@ -76,11 +84,11 @@ jobs:
         run: |
           set -euo pipefail
           AR_HOST="${GCP_AR_REGION}-docker.pkg.dev"
-          IMAGE="${AR_HOST}/${GCP_PROJECT_ID}/${GCP_AR_REPOSITORY}/cinecritic-frontend:${{ github.event.inputs.image_tag }}"
+          IMAGE="${AR_HOST}/${GCP_PROJECT_ID}/${GCP_AR_REPOSITORY}/cinecritic-frontend:${IMAGE_TAG}"
           gcloud run deploy "$FRONTEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
             --image "$IMAGE" \
-            --region "${{ github.event.inputs.gcp_region }}" \
+            --region "$DEPLOY_REGION" \
             --platform managed \
             --allow-unauthenticated \
             --set-env-vars "VITE_API_BASE_URL=${VITE_API_BASE_URL}"
@@ -91,6 +99,14 @@ jobs:
         run: |
           URL=$(gcloud run services describe "$FRONTEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
-            --region "${{ github.event.inputs.gcp_region }}" \
+            --region "$DEPLOY_REGION" \
             --format 'value(status.url)')
           echo "Frontend URL: $URL" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deployment summary
+        run: |
+          {
+            echo "Deployment environment: ${DEPLOY_ENVIRONMENT}"
+            echo "Region: ${DEPLOY_REGION}"
+            echo "Image tag: ${IMAGE_TAG}"
+          } >> "$GITHUB_STEP_SUMMARY"

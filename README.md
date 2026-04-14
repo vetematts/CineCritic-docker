@@ -120,7 +120,7 @@ Workflows:
 - **CI** — lint and test (frontend and backend); uploads **`ci-test-logs`** artifacts on each run.
 - **Docker Build** — `docker compose build` to verify images; uses **placeholder** env values so **pull requests do not need secrets** (build does not start the database). Uploads **`docker-build-logs`**.
 - **Docker Publish** — after **CI** succeeds on `main`/`master`, builds and pushes images to **Google Artifact Registry**, or run manually from **Actions**.
-- **Deploy Cloud Run** — **manual only** (`workflow_dispatch`). Deploys the published Artifact Registry images to Cloud Run using production runtime variables.
+- **Deploy Cloud Run** — **manual only** (`workflow_dispatch`). Deploys the published Artifact Registry images to Cloud Run using production runtime variables and a selected GitHub Environment.
 
 ## Deployment Flow
 
@@ -129,7 +129,7 @@ The pipeline is split into separate stages:
 1. **CI** validates the frontend and backend with linting and tests.
 2. **Docker Build** verifies that the container images build correctly on a Linux runner.
 3. **Docker Publish** pushes versioned images to **Google Artifact Registry** after validation succeeds.
-4. **Deploy Cloud Run** is triggered manually when a production deployment is required.
+4. **Deploy Cloud Run** is triggered manually when a deployment is required and is tied to a selected GitHub Environment.
 
 Cloud Run deployment is kept manual so the application can be fully prepared and verified without creating unnecessary cloud runtime costs during normal development.
 
@@ -155,7 +155,8 @@ Path: **Settings → Secrets and variables → Actions**
 1. **Images** — Run **Docker Publish** so `cinecritic-frontend` and `cinecritic-backend` are published to your Artifact Registry repository with `latest` and short-SHA tags.
 2. **GCP** — Create a **service account** with permission to push to Artifact Registry and deploy to Cloud Run. Download JSON and add it to GitHub as **`GCP_SA_KEY`**. Add **`GCP_PROJECT_ID`**, **`GCP_ARTIFACT_REGISTRY_REGION`**, and **`GCP_ARTIFACT_REGISTRY_REPOSITORY`** as secrets.
 3. **App secrets for production DB** — Add GitHub secrets used only by deploy: **`RUN_DATABASE_URL`**, **`RUN_JWT_SECRET`**, **`RUN_TMDB_API_KEY`** (production Postgres URL and keys — not your local `.env` if those differ).
-4. **Run workflow** — **Actions → Deploy Cloud Run → Run workflow** (choose region and image tag, usually `latest`).
+4. **GitHub Environment** — Create an environment such as `production` or `staging` if you want deployment approvals or environment-scoped secrets.
+5. **Run workflow** — **Actions → Deploy Cloud Run → Run workflow** and choose the target GitHub Environment, region, and image tag.
 
 The frontend service gets **`VITE_API_BASE_URL`** set automatically to the **backend** Cloud Run URL after the backend deploy step. If `DATABASE_URL` contains characters that break `gcloud --set-env-vars`, use **Secret Manager** bindings instead and adjust the workflow.
 
