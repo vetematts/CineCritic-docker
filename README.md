@@ -75,9 +75,9 @@ docker compose version
 
 ## Hardware requirements
 
-- **CPU:** modern dual-core or better  
-- **RAM:** 4 GB minimum (8 GB recommended for frontend + API + Postgres)  
-- **Disk:** ~1 GB for images plus database volume growth  
+- **CPU:** modern dual-core or better
+- **RAM:** 4 GB minimum (8 GB recommended for frontend + API + Postgres)
+- **Disk:** ~1 GB for images plus database volume growth
 
 ## Quick start (Docker)
 
@@ -160,7 +160,7 @@ To run **only** the API or **only** the UI on the host with `npm`, follow **`bac
 
 ## DevOps, CI/CD, and Google Cloud
 
-Automation uses **GitHub Actions**: lint and test the apps, verify Docker builds, push images to **Google Artifact Registry**, and deploy to **Google Cloud Run**. That matches the assessment goal: repeatable builds, stored artefacts, and a cloud deployment path without running your own servers.
+Automation uses **GitHub Actions**: lint and test the apps, verify Docker builds, push images to **Google Artifact Registry**, and deploy to **Google Cloud Run**. The goal is repeatable builds, stored artefacts, and a cloud deployment path without running your own servers.
 
 ### Tools used
 
@@ -216,23 +216,25 @@ Do **not** commit real secrets. Local development uses `.env`; CI build jobs use
 
 ### Deployment flow (summary)
 
-1. Merge to `main` → CI passes → **Docker Publish** can push images.  
-2. Run **Deploy Cloud Run** manually when you want a release: pick environment, region, and image tag.  
+1. Merge to `main` → CI passes → **Docker Publish** can push images.
+2. Run **Deploy Cloud Run** manually when you want a release: pick environment, region, and image tag.
 3. Backend URL is captured for the frontend build-time API base URL.
 
 ### First-time Cloud Run setup
 
-1. **Publish images** — Run **Docker Publish** (or trigger it via CI on `main`) so `cinecritic-frontend` and `cinecritic-backend` exist in Artifact Registry with `latest` and `sha-*` tags.  
-2. **GCP access** — Create a service account that can push to Artifact Registry and deploy to Cloud Run. Add its JSON key to GitHub as **`GCP_SA_KEY`**. Add **`GCP_PROJECT_ID`**, **`GCP_ARTIFACT_REGISTRY_REGION`**, and **`GCP_ARTIFACT_REGISTRY_REPOSITORY`**.  
-3. **Runtime secrets** — Add **`RUN_DATABASE_URL`**, **`RUN_JWT_SECRET`**, and **`RUN_TMDB_API_KEY`** for production (not necessarily the same values as local `.env`).  
-4. **Environment (optional)** — Create a GitHub Environment (e.g. `production`) if you want approvals or environment-scoped secrets.  
+1. **Publish images** — Run **Docker Publish** (or trigger it via CI on `main`) so `cinecritic-frontend` and `cinecritic-backend` exist in Artifact Registry with `latest` and `sha-*` tags.
+2. **GCP access** — Create a service account that can push to Artifact Registry and deploy to Cloud Run. Add its JSON key to GitHub as **`GCP_SA_KEY`**. Add **`GCP_PROJECT_ID`**, **`GCP_ARTIFACT_REGISTRY_REGION`**, and **`GCP_ARTIFACT_REGISTRY_REPOSITORY`**.
+3. **Runtime secrets** — Add **`RUN_DATABASE_URL`**, **`RUN_JWT_SECRET`**, and **`RUN_TMDB_API_KEY`** for production (not necessarily the same values as local `.env`).
+4. **Environment (optional)** — Create a GitHub Environment (e.g. `production`) if you want approvals or environment-scoped secrets.
 5. **Deploy** — **Actions → Deploy Cloud Run → Run workflow**: choose the GitHub Environment, GCP region, and image tag (often `latest` or `sha-…`).
 
 The workflow sets **`VITE_API_BASE_URL`** on the frontend service to the deployed backend URL after the backend deploy step. If `DATABASE_URL` contains characters that break `gcloud --set-env-vars`, use **Secret Manager** and `--set-secrets` instead, and adjust the workflow.
 
 ### Evidence (CI/CD screenshots)
 
-For assessment submission, capture green workflow runs, artefact downloads (test logs, optional JUnit XML), Artifact Registry tags, and Cloud Run services/revisions. A `screenshots/` checklist can mirror the Bloggy-style evidence list.
+It can help to keep a few captures of: green workflow runs, artefact downloads (test logs / optional JUnit XML), Artifact Registry tags, and Cloud Run services/revisions.
+
+If you choose to include images in-repo, store them under **`docs/screenshots/`** and reference them from this README (optional).
 
 ---
 
@@ -261,7 +263,7 @@ In the default Docker setup, the browser talks to the **frontend**; the frontend
 
 ## Data source
 
-This product uses the **TMDB API** but is not endorsed or certified by TMDB.  
+This product uses the **TMDB API** but is not endorsed or certified by TMDB.
 Documentation: https://developer.themoviedb.org/docs
 
 ---
