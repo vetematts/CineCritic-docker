@@ -119,8 +119,8 @@ Workflows:
 
 - **CI** — lint and test (frontend and backend); uploads **`ci-test-logs`** artifacts on each run.
 - **Docker Build** — `docker compose build` to verify images; uses **placeholder** env values so **pull requests do not need secrets** (build does not start the database). Uploads **`docker-build-logs`**.
-- **Docker Publish** — after **CI** succeeds on `main`/`master`, builds and pushes images to **GitHub Container Registry** (`ghcr.io`), or run manually from **Actions**.
-- **Deploy Cloud Run** — **manual only** (`workflow_dispatch`). Deploys the published images to Cloud Run using production runtime variables.
+- **Docker Publish** — after **CI** succeeds on `main`/`master`, builds and pushes images to **Google Artifact Registry**, or run manually from **Actions**.
+- **Deploy Cloud Run** — **manual only** (`workflow_dispatch`). Deploys the published Artifact Registry images to Cloud Run using production runtime variables.
 
 ## Deployment Flow
 
@@ -128,7 +128,7 @@ The pipeline is split into separate stages:
 
 1. **CI** validates the frontend and backend with linting and tests.
 2. **Docker Build** verifies that the container images build correctly on a Linux runner.
-3. **Docker Publish** pushes versioned images to **GHCR** after validation succeeds.
+3. **Docker Publish** pushes versioned images to **Google Artifact Registry** after validation succeeds.
 4. **Deploy Cloud Run** is triggered manually when a production deployment is required.
 
 Cloud Run deployment is kept manual so the application can be fully prepared and verified without creating unnecessary cloud runtime costs during normal development.
@@ -142,13 +142,13 @@ Path: **Settings → Secrets and variables → Actions**
 | Place | What it is for |
 | ----- | ---------------- |
 | **`.env` (local, not committed)** | Running `docker compose` on your machine (`DATABASE_URL`, `JWT_SECRET`, `TMDB_API_KEY`, etc.). |
-| **GitHub Actions → Secrets** | Values the **workflows** need (e.g. **deploy**: GCP credentials and **runtime** DB/API secrets passed into `gcloud run deploy`). CI and Docker Build do **not** need your real app secrets. |
+| **GitHub Actions → Secrets** | Values the **workflows** need (for example GCP authentication, Artifact Registry configuration, and deploy-time runtime variables passed into `gcloud run deploy`). CI and Docker Build do **not** need your real app secrets. |
 | **Cloud Run (or Secret Manager)** | What the **running containers** use in GCP. The deploy workflow passes secrets from GitHub into Cloud Run **at deploy time**; you can later move DB/passwords to **Secret Manager** only and reference them from Cloud Run. |
 
 ### Deploy to Cloud Run (when you are ready)
 
-1. **Images** — Run **Docker Publish** so `ghcr.io/<owner>/cinecritic-frontend` and `cinecritic-backend` exist. For private packages, either make the GHCR packages **public** for this coursework or configure Cloud Run to pull private images ([Google docs](https://cloud.google.com/run/docs/authenticating-to-private-docker)).
-2. **GCP** — Create a **service account** with permission to deploy Cloud Run (and to pull the container image if needed). Download JSON and add it to GitHub as **`GCP_SA_KEY`**. Add **`GCP_PROJECT_ID`** as a secret (or use a variable).
+1. **Images** — Run **Docker Publish** so `cinecritic-frontend` and `cinecritic-backend` are published to your Artifact Registry repository with `latest` and short-SHA tags.
+2. **GCP** — Create a **service account** with permission to push to Artifact Registry and deploy to Cloud Run. Download JSON and add it to GitHub as **`GCP_SA_KEY`**. Add **`GCP_PROJECT_ID`**, **`GCP_ARTIFACT_REGISTRY_REGION`**, and **`GCP_ARTIFACT_REGISTRY_REPOSITORY`** as secrets.
 3. **App secrets for production DB** — Add GitHub secrets used only by deploy: **`RUN_DATABASE_URL`**, **`RUN_JWT_SECRET`**, **`RUN_TMDB_API_KEY`** (production Postgres URL and keys — not your local `.env` if those differ).
 4. **Run workflow** — **Actions → Deploy Cloud Run → Run workflow** (choose region and image tag, usually `latest`).
 
@@ -168,11 +168,11 @@ The frontend service gets **`VITE_API_BASE_URL`** set automatically to the **bac
 - **Why chosen:** Native to GitHub repos, fast setup, good ecosystem (Docker + Google actions), clear audit trail.
 - **Alternatives:** GitLab CI, Jenkins, CircleCI.
 
-### Container registry (GHCR)
+### Container registry (Google Artifact Registry)
 
-- **Purpose:** Store built images (`cinecritic-frontend`, `cinecritic-backend`) for deployment.
-- **Why chosen:** Integrated auth with GitHub Actions; simple tagging with commit SHAs.
-- **Alternatives:** Docker Hub, Google Artifact Registry (recommended if you want everything inside GCP).
+- **Purpose:** Store built images (`cinecritic-frontend`, `cinecritic-backend`) inside the same cloud platform used for deployment.
+- **Why chosen:** Keeps image storage and deployment in GCP, simplifies the architecture story, and avoids cross-platform registry dependencies.
+- **Alternatives:** GHCR, Docker Hub.
 
 ### Google Cloud Run (deployment target)
 

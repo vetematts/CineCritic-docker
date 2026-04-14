@@ -10,7 +10,7 @@ on:
         required: true
         default: australia-southeast1
       image_tag:
-        description: GHCR tag to deploy (usually latest or sha-xxxxxxxx)
+        description: Artifact Registry tag to deploy (usually latest or sha-xxxxxxxx)
         type: string
         required: true
         default: latest
@@ -23,6 +23,8 @@ jobs:
     env:
       BACKEND_SERVICE_NAME: cinecritic-backend
       FRONTEND_SERVICE_NAME: cinecritic-frontend
+      GCP_AR_REGION: ${{ secrets.GCP_ARTIFACT_REGISTRY_REGION }}
+      GCP_AR_REPOSITORY: ${{ secrets.GCP_ARTIFACT_REGISTRY_REPOSITORY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -45,8 +47,8 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           set -euo pipefail
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE="ghcr.io/${OWNER}/cinecritic-backend:${{ github.event.inputs.image_tag }}"
+          AR_HOST="${GCP_AR_REGION}-docker.pkg.dev"
+          IMAGE="${AR_HOST}/${GCP_PROJECT_ID}/${GCP_AR_REPOSITORY}/cinecritic-backend:${{ github.event.inputs.image_tag }}"
           gcloud run deploy "$BACKEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
             --image "$IMAGE" \
@@ -73,8 +75,8 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           set -euo pipefail
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE="ghcr.io/${OWNER}/cinecritic-frontend:${{ github.event.inputs.image_tag }}"
+          AR_HOST="${GCP_AR_REGION}-docker.pkg.dev"
+          IMAGE="${AR_HOST}/${GCP_PROJECT_ID}/${GCP_AR_REPOSITORY}/cinecritic-frontend:${{ github.event.inputs.image_tag }}"
           gcloud run deploy "$FRONTEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
             --image "$IMAGE" \
