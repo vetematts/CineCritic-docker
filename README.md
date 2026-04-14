@@ -133,7 +133,12 @@ The pipeline is split into separate stages:
 
 Cloud Run deployment is kept manual so the application can be fully prepared and verified without creating unnecessary cloud runtime costs during normal development.
 
-For **local** runs, set `JWT_SECRET`, `TMDB_API_KEY`, and `POSTGRES_PASSWORD` in `.env` (see `.env.example`). Add the same as **repository secrets** if a workflow or deploy step you add later needs them; **Docker Build** and **Docker Publish** (as configured here) do not require those secrets.
+For **local** runs, set `JWT_SECRET`, `TMDB_API_KEY`, and `POSTGRES_PASSWORD` in `.env` (see `.env.example`).  
+For **GitHub Actions**, keep app runtime secrets separate from pipeline secrets:
+
+- **Docker Build** does not require real app secrets
+- **Docker Publish** requires GCP authentication and Artifact Registry configuration secrets
+- **Deploy Cloud Run** requires both GCP auth secrets and deploy-time runtime secrets
 
 Path: **Settings → Secrets and variables → Actions**
 
