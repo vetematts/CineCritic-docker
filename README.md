@@ -1,187 +1,271 @@
-# 🐳 CineCritic Docker
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/7fc394ad-fb28-4aec-8977-a94f7bf02885" alt="CineCritic Logo" width="444" />
+</p>
 
-Container orchestration for the CineCritic frontend, backend, and PostgreSQL database.
+# CineCritic
+
+**CineCritic** is a movie discovery and review platform: a React (Vite) frontend, a Node.js (Express) API, and PostgreSQL. TMDB powers movie metadata; the app stores users, reviews, watchlists, and favourites in Postgres.
+
+This repository is the **canonical full-stack project**: `frontend/`, `backend/`, and Docker Compose live together. Earlier coursework used **separate** frontend and backend repos; this monorepo is the **definitive** version for local runs, CI/CD, and cloud deployment. **Docker Compose** is the supported way to run the whole stack on your machine.
 
 ## Contents
 
-- [Repositories](#-repositories)
-- [Service Architecture](#-service-architecture)
-- [Prerequisites](#-prerequisites)
-- [Hardware Requirements](#-hardware-requirements)
-- [Install Instructions](#-install-instructions)
-- [Commands](#-commands)
-- [Database Seed](#-database-seed)
-- [Access URLs](#-access-urls)
-- [Environment Variables](#-environment-variables)
-- [CI](#-ci)
-- [Deployment Flow](#-deployment-flow)
-- [Technology Choices and Alternatives](#-technology-choices-and-alternatives)
+- [What’s in this repo](#whats-in-this-repo)
+- [Features](#features)
+- [Repositories and deployed apps](#repositories-and-deployed-apps)
+- [Prerequisites](#prerequisites)
+- [Hardware requirements](#hardware-requirements)
+- [Quick start (Docker)](#quick-start-docker)
+- [Local URLs](#local-urls)
+- [Environment variables](#environment-variables)
+- [Useful commands](#useful-commands)
+- [Database seed](#database-seed)
+- [Running without Docker](#running-without-docker)
+- [DevOps, CI/CD, and Google Cloud](#devops-cicd-and-google-cloud)
+- [Architecture](#architecture)
+- [Technology choices](#technology-choices)
+- [Data source](#data-source)
+- [Licensing notes](#licensing-notes)
 
-## 📂 Repositories
+## What’s in this repo
 
-- Docker orchestration: https://github.com/vetematts/CineCritic
+| Path | Role |
+| --- | --- |
+| `frontend/` | React + Vite SPA (styled-components, Vitest) |
+| `backend/` | Express REST API, JWT auth, Swagger at `/docs`, Jest tests |
+| `docker-compose.yml` | Orchestrates frontend, backend, and Postgres |
+| `.github/workflows/` | CI, Docker build, image publish, Cloud Run deploy |
 
-## 🧱 Service Architecture
+Code style follows the **Google JavaScript Style Guide**, with ESLint and Prettier in both packages. For dependency tables and day-to-day commands per package, see **`frontend/README.md`** and **`backend/README.md`**.
 
-- `frontend`: React + Vite development server
-- `backend`: Node.js + Express API
-- `db`: PostgreSQL 16 (Alpine)
-- `cinecritic-network`: shared bridge network for service-to-service communication
-- `db_data`: named Docker volume for persistent Postgres data
+## Features
 
-## 🧩 Application Architecture (AAD)
+- **Discovery:** trending, top-rated, search, advanced search, genres (via TMDB through the API).
+- **Reviews:** create, read, update, and delete reviews tied to movies and users.
+- **Accounts:** sign up, log in (JWT), profile and user management (see API docs for admin vs self).
+- **Lists:** watchlist and favourites per user.
 
-In standard execution, CineCritic runs as three Docker services managed by Docker Compose: a React/Vite frontend (`frontend`), a Node/Express API (`backend`), and a PostgreSQL database (`db`). The user’s browser accesses the frontend at `http://localhost:5173`, and the frontend calls the backend over HTTP using `VITE_API_BASE_URL` (default `http://localhost:4000`). The backend applies middleware (Helmet, CORS), reads and writes data in Postgres over the internal `cinecritic-network` (`db:5432`), and calls the external TMDB API over HTTPS using `TMDB_API_KEY`. Environment variables are loaded from `.env` for local runs, and from GitHub Actions secrets when the CI workflow builds the images.
+Full route and request details are in **Swagger** (`/docs` when the API is running) and in **`backend/README.md`**—this file does not duplicate every endpoint.
 
-<img width="2123" height="860" alt="CineCritic-docker AAD drawio" src="https://github.com/user-attachments/assets/6a322742-e510-4736-aaad-f9bcc5c1ae88" />
+## Repositories and deployed apps
 
+| | URL |
+| --- | --- |
+| **This monorepo** | https://github.com/vetematts/CineCritic-docker |
+| Frontend (historical split repo) | https://github.com/vetematts/CineCritic-frontend |
+| Backend (historical split repo) | https://github.com/vetematts/CineCritic-backend |
 
-## 🔧 Prerequisites
+**Public deployments** (may differ from this repo’s pinned versions):
 
-- Docker Desktop (or Docker Engine + Compose v2)
-- Git
+| | URL |
+| --- | --- |
+| Web app | https://cinecritic.app |
+| API (example) | https://cinecritic.onrender.com |
+| API docs (example) | https://cinecritic.onrender.com/docs |
 
-Verify Docker:
+## Prerequisites
+
+- **Docker Desktop** (or Docker Engine + Compose v2)
+- **Git**
 
 ```bash
 docker --version
 docker compose version
 ```
 
-## 💻 Hardware Requirements
+## Hardware requirements
 
-- CPU: modern dual-core (or better)
-- RAM: 4 GB minimum (8 GB recommended for running frontend + backend + Postgres)
-- Disk: ~1 GB for Docker images, plus database volume growth over time
+- **CPU:** modern dual-core or better  
+- **RAM:** 4 GB minimum (8 GB recommended for frontend + API + Postgres)  
+- **Disk:** ~1 GB for images plus database volume growth  
 
-## 🛠️ Install Instructions
+## Quick start (Docker)
 
-1. **Clone the repository**
+1. **Clone**
+
    ```bash
    git clone https://github.com/vetematts/CineCritic-docker.git
    cd CineCritic-docker
    ```
-2. **Create `.env` from template**
+
+2. **Environment**
+
    ```bash
    cp .env.example .env
    ```
-3. **Set required values in `.env`**
-   - `TMDB_API_KEY`
-   - `JWT_SECRET`
-   - `POSTGRES_PASSWORD`
-4. **Build and start the containers**
+
+   Set at least **`TMDB_API_KEY`**, **`JWT_SECRET`**, and **`POSTGRES_PASSWORD`** (and align **`DATABASE_URL`** with your Postgres user/password if you change them).
+
+3. **Run**
+
    ```bash
    docker compose up --build -d
    ```
 
-## 🧪 Commands
+4. **Optional:** seed demo data (after containers are healthy)
 
-- `docker compose up -d` - start existing containers
-- `docker compose up --build -d` - rebuild images and start containers
-- `docker compose down` - stop and remove containers/networks
-- `docker compose logs -f` - view logs
-- `docker compose ps` - show service status and ports
+   ```bash
+   docker compose run --rm backend npm run seed
+   ```
 
-## 🌱 Database Seed
+   Seeded logins are documented in **`backend/README.md`**.
 
-Run the seed after containers are running:
+## Local URLs
+
+| Service | URL |
+| --- | --- |
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:4000 |
+| Swagger UI | http://localhost:4000/docs |
+| PostgreSQL | localhost:5432 |
+
+## Environment variables
+
+Compose reads the **root** `.env`. Copy from `.env.example` and adjust.
+
+| Variable | Purpose |
+| --- | --- |
+| `VITE_API_BASE_URL` | Browser → API URL (default `http://localhost:4000`) |
+| `DATABASE_URL` | Postgres connection string (Compose uses host `db`) |
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Database bootstrap |
+| `JWT_SECRET` | JWT signing |
+| `TMDB_API_KEY` | TMDB API (server-side only) |
+| `DATABASE_SSL` | Use `false` locally; set appropriately in production |
+
+`frontend/.env.example` and `backend/.env.example` document package-specific copies if you run tools outside Docker.
+
+## Useful commands
+
+| Command | Purpose |
+| --- | --- |
+| `docker compose up -d` | Start stack |
+| `docker compose up --build -d` | Rebuild images and start |
+| `docker compose down` | Stop and remove containers |
+| `docker compose logs -f` | Follow logs |
+| `docker compose ps` | Service status |
+
+## Database seed
+
+One-off seed (does not run on image build):
 
 ```bash
 docker compose run --rm backend npm run seed
 ```
 
-Use this as a manual one-off command. It does not run during image build.
+## Running without Docker
 
-## 🚀 Access URLs
+To run **only** the API or **only** the UI on the host with `npm`, follow **`backend/README.md`** and **`frontend/README.md`** (install, `.env`, and scripts). You will need a local Postgres instance for the API.
 
-- Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:4000`
-- Swagger UI: `http://localhost:4000/docs`
-- PostgreSQL: `localhost:5432`
+---
 
-## ⚙️ Environment Variables
+## DevOps, CI/CD, and Google Cloud
 
-Compose reads runtime values from the root `.env` file.
+Automation uses **GitHub Actions**: lint and test the apps, verify Docker builds, push images to **Google Artifact Registry**, and deploy to **Google Cloud Run**. That matches the assessment goal: repeatable builds, stored artefacts, and a cloud deployment path without running your own servers.
 
-Core variables:
+### Tools used
 
-- `VITE_API_BASE_URL`
-- `DATABASE_URL`
-- `POSTGRES_DB`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
-- `JWT_SECRET`
-- `TMDB_API_KEY`
+| Tool | Role in this project |
+| --- | --- |
+| GitHub Actions | CI, publish, deploy orchestration |
+| Docker + Compose | Local stack; same images CI builds |
+| Google Artifact Registry | Versioned Docker images (`sha-*`, `latest`) |
+| Google Cloud Run | Managed containers, HTTPS, revisions |
+| GitHub Secrets / Environments | Credentials and deploy-time configuration |
 
-## CI
+**Why this stack (short):** GitHub Actions is native to the repo and keeps logs and artefacts in one place. Artifact Registry and Cloud Run stay inside GCP, so IAM and deployment stay coherent. Alternatives include GitLab CI, Jenkins, GHCR + another host, or GKE (more operations overhead than this project needs).
 
-Workflows:
+### Workflows (`.github/workflows/`)
 
-- **CI** — lint and test (frontend and backend); uploads **`ci-test-logs`** artifacts on each run.
-- **Docker Build** — `docker compose build` to verify images; uses **placeholder** env values so **pull requests do not need secrets** (build does not start the database). Uploads **`docker-build-logs`**.
-- **Docker Publish** — after **CI** succeeds on `main`/`master`, builds and pushes images to **Google Artifact Registry**, or run manually from **Actions**.
-- **Deploy Cloud Run** — **manual only** (`workflow_dispatch`). Deploys the published Artifact Registry images to Cloud Run using production runtime variables and a selected GitHub Environment.
+1. **`ci.yml` — Continuous integration**
 
-## Deployment Flow
+   **Triggers:** push and pull request to `main` / `master`, `workflow_dispatch`, and a **weekly schedule** (cron in UTC; see workflow file for local-time comment).
 
-The pipeline is split into separate stages:
+   **Typical steps:** checkout → install frontend and backend dependencies → lint and test both → upload test/lint logs as the **`ci-test-logs`** artifact (retained for a set number of days).
 
-1. **CI** validates the frontend and backend with linting and tests.
-2. **Docker Build** verifies that the container images build correctly on a Linux runner.
-3. **Docker Publish** pushes versioned images to **Google Artifact Registry** after validation succeeds.
-4. **Deploy Cloud Run** is triggered manually when a deployment is required and is tied to a selected GitHub Environment.
+2. **`docker-build.yml` — Image build check**
 
-Cloud Run deployment is kept manual so the application can be fully prepared and verified without creating unnecessary cloud runtime costs during normal development.
+   **Triggers:** push, pull request, `workflow_dispatch`.
 
-For **local** runs, set `JWT_SECRET`, `TMDB_API_KEY`, and `POSTGRES_PASSWORD` in `.env` (see `.env.example`).  
-For **GitHub Actions**, keep app runtime secrets separate from pipeline secrets:
+   Builds Compose images on a Linux runner using **placeholder** env values so **pull requests do not need production secrets**. Uploads **`docker-build-logs`**.
 
-- **Docker Build** does not require real app secrets
-- **Docker Publish** requires GCP authentication and Artifact Registry configuration secrets
-- **Deploy Cloud Run** requires both GCP auth secrets and deploy-time runtime secrets
+3. **`docker-publish.yml` — Publish images**
 
-Path: **Settings → Secrets and variables → Actions**
+   **Triggers:** after **`CI`** completes successfully on `main` / `master` (`workflow_run`), or **manual** `workflow_dispatch`.
 
-### Where environment variables live
+   Builds and pushes **`cinecritic-frontend`** and **`cinecritic-backend`** to Artifact Registry with metadata tags (short SHA + `latest`).
 
-| Place | What it is for |
-| ----- | ---------------- |
-| **`.env` (local, not committed)** | Running `docker compose` on your machine (`DATABASE_URL`, `JWT_SECRET`, `TMDB_API_KEY`, etc.). |
-| **GitHub Actions → Secrets** | Values the **workflows** need (for example GCP authentication, Artifact Registry configuration, and deploy-time runtime variables passed into `gcloud run deploy`). CI and Docker Build do **not** need your real app secrets. |
-| **Cloud Run (or Secret Manager)** | What the **running containers** use in GCP. The deploy workflow passes secrets from GitHub into Cloud Run **at deploy time**; you can later move DB/passwords to **Secret Manager** only and reference them from Cloud Run. |
+4. **`deploy-cloud-run.yml` — Deploy**
 
-### Deploy to Cloud Run (when you are ready)
+   **Trigger:** **`workflow_dispatch` only** (manual). Deploys selected image tags to Cloud Run, sets backend env (database, JWT, TMDB, `NODE_ENV`), then deploys the frontend with **`VITE_API_BASE_URL`** set to the backend service URL.
 
-1. **Images** — Run **Docker Publish** so `cinecritic-frontend` and `cinecritic-backend` are published to your Artifact Registry repository with `latest` and short-SHA tags.
-2. **GCP** — Create a **service account** with permission to push to Artifact Registry and deploy to Cloud Run. Download JSON and add it to GitHub as **`GCP_SA_KEY`**. Add **`GCP_PROJECT_ID`**, **`GCP_ARTIFACT_REGISTRY_REGION`**, and **`GCP_ARTIFACT_REGISTRY_REPOSITORY`** as secrets.
-3. **App secrets for production DB** — Add GitHub secrets used only by deploy: **`RUN_DATABASE_URL`**, **`RUN_JWT_SECRET`**, **`RUN_TMDB_API_KEY`** (production Postgres URL and keys — not your local `.env` if those differ).
-4. **GitHub Environment** — Create an environment such as `production` or `staging` if you want deployment approvals or environment-scoped secrets.
-5. **Run workflow** — **Actions → Deploy Cloud Run → Run workflow** and choose the target GitHub Environment, region, and image tag.
+### GitHub secrets (typical)
 
-The frontend service gets **`VITE_API_BASE_URL`** set automatically to the **backend** Cloud Run URL after the backend deploy step. If `DATABASE_URL` contains characters that break `gcloud --set-env-vars`, use **Secret Manager** bindings instead and adjust the workflow.
+Set under **Settings → Secrets and variables → Actions** (and use **Environments** for production if you want approvals).
 
-## 🧭 Technology Choices and Alternatives
+| Secret | Used for |
+| --- | --- |
+| `GCP_SA_KEY` | JSON key for GCP (publish + deploy) |
+| `GCP_PROJECT_ID` | GCP project |
+| `GCP_ARTIFACT_REGISTRY_REGION` | Artifact Registry region |
+| `GCP_ARTIFACT_REGISTRY_REPOSITORY` | Repository name |
+| `RUN_DATABASE_URL` | Production Postgres URL (deploy) |
+| `RUN_JWT_SECRET` | Production JWT secret (deploy) |
+| `RUN_TMDB_API_KEY` | Production TMDB key (deploy) |
 
-### Docker + Docker Compose
+Do **not** commit real secrets. Local development uses `.env`; CI build jobs use placeholders where noted above.
 
-- **Purpose:** Standard local orchestration for running a multi-service app (frontend, API, database) together.
-- **Why chosen:** Simple, repeatable environment; service-name networking; easy for assessors/devs to run.
-- **Alternatives:** Run services directly on the host; Kubernetes (too heavy for this scope).
+### Deployment flow (summary)
 
-### GitHub Actions (CI/CD)
+1. Merge to `main` → CI passes → **Docker Publish** can push images.  
+2. Run **Deploy Cloud Run** manually when you want a release: pick environment, region, and image tag.  
+3. Backend URL is captured for the frontend build-time API base URL.
 
-- **Purpose:** Run lint/tests, verify container builds, publish images, and optionally deploy.
-- **Why chosen:** Native to GitHub repos, fast setup, good ecosystem (Docker + Google actions), clear audit trail.
-- **Alternatives:** GitLab CI, Jenkins, CircleCI.
+### First-time Cloud Run setup
 
-### Container registry (Google Artifact Registry)
+1. **Publish images** — Run **Docker Publish** (or trigger it via CI on `main`) so `cinecritic-frontend` and `cinecritic-backend` exist in Artifact Registry with `latest` and `sha-*` tags.  
+2. **GCP access** — Create a service account that can push to Artifact Registry and deploy to Cloud Run. Add its JSON key to GitHub as **`GCP_SA_KEY`**. Add **`GCP_PROJECT_ID`**, **`GCP_ARTIFACT_REGISTRY_REGION`**, and **`GCP_ARTIFACT_REGISTRY_REPOSITORY`**.  
+3. **Runtime secrets** — Add **`RUN_DATABASE_URL`**, **`RUN_JWT_SECRET`**, and **`RUN_TMDB_API_KEY`** for production (not necessarily the same values as local `.env`).  
+4. **Environment (optional)** — Create a GitHub Environment (e.g. `production`) if you want approvals or environment-scoped secrets.  
+5. **Deploy** — **Actions → Deploy Cloud Run → Run workflow**: choose the GitHub Environment, GCP region, and image tag (often `latest` or `sha-…`).
 
-- **Purpose:** Store built images (`cinecritic-frontend`, `cinecritic-backend`) inside the same cloud platform used for deployment.
-- **Why chosen:** Keeps image storage and deployment in GCP, simplifies the architecture story, and avoids cross-platform registry dependencies.
-- **Alternatives:** GHCR, Docker Hub.
+The workflow sets **`VITE_API_BASE_URL`** on the frontend service to the deployed backend URL after the backend deploy step. If `DATABASE_URL` contains characters that break `gcloud --set-env-vars`, use **Secret Manager** and `--set-secrets` instead, and adjust the workflow.
 
-### Google Cloud Run (deployment target)
+### Evidence (CI/CD screenshots)
 
-- **Purpose:** Deploy containers without managing servers.
-- **Why chosen:** Straightforward container deploy, autoscaling, and easy rollbacks via revisions.
-- **Alternatives:** GCE/EC2 (more ops), Kubernetes (more complexity).
+For assessment submission, capture green workflow runs, artefact downloads (test logs, optional JUnit XML), Artifact Registry tags, and Cloud Run services/revisions. A `screenshots/` checklist can mirror the Bloggy-style evidence list.
+
+---
+
+## Architecture
+
+In the default Docker setup, the browser talks to the **frontend**; the frontend calls the **backend** using `VITE_API_BASE_URL`. The backend uses **Postgres** on the Compose network and calls **TMDB** over HTTPS.
+
+<img width="2123" height="860" alt="CineCritic application architecture" src="https://github.com/user-attachments/assets/6a322742-e510-4736-aaad-f9bcc5c1ae88" />
+
+---
+
+## Technology choices
+
+| Layer | Choice | Role |
+| --- | --- | --- |
+| UI | React, Vite, styled-components | SPA, fast dev/build, component styling |
+| API | Express, Zod, JWT | REST API, validation, auth |
+| Data | PostgreSQL | Users, reviews, watchlist, favourites |
+| External API | TMDB | Movie metadata (attribution below) |
+| Local ops | Docker Compose | One command to run all services |
+| CI/CD | GitHub Actions + Artifact Registry + Cloud Run | Test, build, publish, deploy |
+
+**Alternatives (high level):** Fastify/Nest instead of Express; MySQL/Mongo instead of Postgres for different data models; Vercel/Netlify + separate API host instead of Cloud Run; Kubernetes instead of Cloud Run (more moving parts).
+
+---
+
+## Data source
+
+This product uses the **TMDB API** but is not endorsed or certified by TMDB.  
+Documentation: https://developer.themoviedb.org/docs
+
+---
+
+## Licensing notes
+
+Dependencies are open source under permissive licenses (MIT/ISC/BSD, etc.). See each package’s page on npm for details.
