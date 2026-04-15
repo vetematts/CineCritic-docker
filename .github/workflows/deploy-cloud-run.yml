@@ -65,6 +65,26 @@ jobs:
             --allow-unauthenticated \
             --set-env-vars "^@^DATABASE_URL=${DATABASE_URL}@JWT_SECRET=${JWT_SECRET}@TMDB_API_KEY=${TMDB_API_KEY}@NODE_ENV=production@DATABASE_SSL=false"
 
+      - name: Capture backend revision
+        id: backend_revision
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          REV="$(gcloud run revisions list \
+            --service "$BACKEND_SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$DEPLOY_REGION" \
+            --format 'value(metadata.name)' \
+            --limit 1 2>/dev/null || true)"
+
+          if [ -z "$REV" ]; then
+            REV="unknown"
+          fi
+
+          echo "revision=$REV" >> "$GITHUB_OUTPUT"
+          echo "Backend revision: $REV" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Backend service URL
         id: backend_url
         env:
@@ -93,6 +113,26 @@ jobs:
             --allow-unauthenticated \
             --set-env-vars "VITE_API_BASE_URL=${VITE_API_BASE_URL}"
 
+      - name: Capture frontend revision
+        id: frontend_revision
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          REV="$(gcloud run revisions list \
+            --service "$FRONTEND_SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$DEPLOY_REGION" \
+            --format 'value(metadata.name)' \
+            --limit 1 2>/dev/null || true)"
+
+          if [ -z "$REV" ]; then
+            REV="unknown"
+          fi
+
+          echo "revision=$REV" >> "$GITHUB_OUTPUT"
+          echo "Frontend revision: $REV" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Frontend service URL
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -109,4 +149,26 @@ jobs:
             echo "Deployment environment: ${DEPLOY_ENVIRONMENT}"
             echo "Region: ${DEPLOY_REGION}"
             echo "Image tag: ${IMAGE_TAG}"
+            echo "Backend revision: ${{ steps.backend_revision.outputs.revision }}"
+            echo "Frontend revision: ${{ steps.frontend_revision.outputs.revision }}"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Write deployment summary artifact
+        if: always()
+        run: |
+          {
+            echo "environment=${DEPLOY_ENVIRONMENT}"
+            echo "region=${DEPLOY_REGION}"
+            echo "image_tag=${IMAGE_TAG}"
+            echo "backend_revision=${{ steps.backend_revision.outputs.revision }}"
+            echo "backend_url=${{ steps.backend_url.outputs.url }}"
+            echo "frontend_revision=${{ steps.frontend_revision.outputs.revision }}"
+          } > deployment-summary.txt
+
+      - name: Upload deployment summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-summary
+          path: deployment-summary.txt
+          retention-days: 90
