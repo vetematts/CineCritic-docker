@@ -24,20 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: |
-            frontend/package-lock.json
-            backend/package-lock.json
-
       - name: Prepare log directory
         run: mkdir -p ci-artifacts/test-logs
 
       - name: Install frontend deps
-        working-directory: frontend
-        run: npm ci
+        uses: ./.github/actions/node-install
+        with:
+          working-directory: frontend
 
       - name: Lint frontend
         working-directory: frontend
@@ -48,8 +41,9 @@ jobs:
         run: npm test -- --run --reporter=verbose 2>&1 | tee ../ci-artifacts/test-logs/frontend-vitest.log
 
       - name: Install backend deps
-        working-directory: backend
-        run: npm ci
+        uses: ./.github/actions/node-install
+        with:
+          working-directory: backend
 
       - name: Lint backend
         working-directory: backend

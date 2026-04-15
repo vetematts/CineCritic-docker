@@ -1,0 +1,18 @@
+name: Node install (npm ci)
+description: Set up Node and install dependencies for a package directory.
+inputs:
+  working-directory:
+    description: Subdirectory containing package-lock.json
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "24"
+        cache: npm
+        cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+    - run: npm ci
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+
