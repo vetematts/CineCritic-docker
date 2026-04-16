@@ -21,6 +21,9 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 const app = express();
 
+// Trust the Cloud Run / load-balancer proxy so req.ip and rate-limiting work correctly
+app.set('trust proxy', true);
+
 app.use(
   helmet({
     contentSecurityPolicy: {
