@@ -57,13 +57,23 @@ jobs:
           set -euo pipefail
           AR_HOST="${GCP_AR_REGION}-docker.pkg.dev"
           IMAGE="${AR_HOST}/${GCP_PROJECT_ID}/${GCP_AR_REPOSITORY}/cinecritic-backend:${IMAGE_TAG}"
+
+          # Use an env vars file to avoid escaping issues (DATABASE_URL contains @, :, etc).
+          cat > backend-env.yaml <<EOF
+          DATABASE_URL: "${DATABASE_URL}"
+          JWT_SECRET: "${JWT_SECRET}"
+          TMDB_API_KEY: "${TMDB_API_KEY}"
+          NODE_ENV: "production"
+          DATABASE_SSL: "true"
+          EOF
+
           gcloud run deploy "$BACKEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
             --image "$IMAGE" \
             --region "$DEPLOY_REGION" \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "^@^DATABASE_URL=${DATABASE_URL}@JWT_SECRET=${JWT_SECRET}@TMDB_API_KEY=${TMDB_API_KEY}@NODE_ENV=production@DATABASE_SSL=true"
+            --env-vars-file backend-env.yaml
 
       - name: Capture backend revision
         id: backend_revision
