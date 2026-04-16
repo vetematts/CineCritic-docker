@@ -2,15 +2,20 @@
 FROM node:24-alpine3.21
 
 # Set the runtime environment explicitly.
-ENV NODE_ENV=development
+ENV NODE_ENV=production
 
 WORKDIR /usr/src/app
 
 # Copy dependency manifests first to maximise Docker layer cache reuse.
 COPY package*.json ./
 
-# Install all dependencies required for local development commands.
-RUN npm install
+# Make npm installs more resilient on CI runners.
+RUN npm config set fetch-retries 5 \
+  && npm config set fetch-retry-mintimeout 20000 \
+  && npm config set fetch-retry-maxtimeout 120000
+
+# Install dependencies deterministically from the lockfile.
+RUN npm ci --omit=dev
 
 # Copy application source after dependencies are installed.
 COPY . .
