@@ -52,6 +52,7 @@ jobs:
           DATABASE_URL: ${{ secrets.RUN_DATABASE_URL }}
           JWT_SECRET: ${{ secrets.RUN_JWT_SECRET }}
           TMDB_API_KEY: ${{ secrets.RUN_TMDB_API_KEY }}
+          CLOUDSQL_CONNECTION_NAME: ${{ secrets.CLOUDSQL_CONNECTION_NAME }}
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           set -euo pipefail
@@ -64,8 +65,13 @@ jobs:
           JWT_SECRET: "${JWT_SECRET}"
           TMDB_API_KEY: "${TMDB_API_KEY}"
           NODE_ENV: "production"
-          DATABASE_SSL: "true"
+          DATABASE_SSL: "false"
           EOF
+
+          EXTRA_ARGS=""
+          if [ -n "${CLOUDSQL_CONNECTION_NAME:-}" ]; then
+            EXTRA_ARGS="--add-cloudsql-instances ${CLOUDSQL_CONNECTION_NAME}"
+          fi
 
           gcloud run deploy "$BACKEND_SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
@@ -73,6 +79,7 @@ jobs:
             --region "$DEPLOY_REGION" \
             --platform managed \
             --allow-unauthenticated \
+            $EXTRA_ARGS \
             --env-vars-file backend-env.yaml
 
       - name: Capture backend revision
