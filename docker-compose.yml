@@ -5,6 +5,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: dev
     environment:
       # Frontend runs in the browser, so this must be a host-reachable API URL.
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}

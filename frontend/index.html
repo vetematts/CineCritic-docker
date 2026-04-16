@@ -28,6 +28,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Runtime config injected by the container entrypoint (Cloud Run / Docker). -->
+    <script src="/runtime-env.js"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

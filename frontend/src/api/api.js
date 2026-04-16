@@ -1,4 +1,9 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const runtimeBaseUrl =
+  typeof window !== 'undefined'
+    ? window.__CINECRITIC_RUNTIME__?.VITE_API_BASE_URL
+    : undefined;
+
+const API_BASE_URL = runtimeBaseUrl || import.meta.env.VITE_API_BASE_URL || '';
 
 // Read the JWT from localStorage (if it exists).
 const getToken = () => {
