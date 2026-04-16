@@ -162,6 +162,32 @@ To run **only** the API or **only** the UI on the host with `npm`, follow **`bac
 
 Automation uses **GitHub Actions**: lint and test the apps, verify Docker builds, push images to **Google Artifact Registry**, and deploy to **Google Cloud Run**. The goal is repeatable builds, stored artefacts, and a cloud deployment path without running your own servers.
 
+### Deployment architecture (high level)
+
+```mermaid
+flowchart LR
+  Dev[Developer] -->|push / PR| Repo[GitHub repo]
+
+  subgraph GA[GitHub Actions]
+    CI[CI\nlint + tests\nartifacts] --> PUB[Docker Publish\npush images]
+    CI --> BUILD[Docker Build\ncompose build check]
+    DEP[Deploy Cloud Run\nmanual]:::manual
+  end
+
+  Repo --> CI
+  CI --> PUB
+  PUB --> AR[Artifact Registry\ncinecritic-frontend + cinecritic-backend\nlatest + sha-* tags]
+  AR --> DEP
+
+  subgraph CR[Cloud Run]
+    FE[frontend service\nVITE_API_BASE_URL] -->|HTTPS| BE[backend service\nDATABASE_URL, JWT_SECRET,\nTMDB_API_KEY]
+  end
+
+  User[User browser] -->|HTTPS| FE
+  BE -->|SQL| DB[(Postgres)]
+  BE -->|HTTPS| TMDB[TMDB API]
+```
+
 ### Tools used
 
 | Tool | Role in this project |
@@ -180,23 +206,40 @@ Automation uses **GitHub Actions**: lint and test the apps, verify Docker builds
 
    **Triggers:** push and pull request to `main` / `master`, `workflow_dispatch`, and a **weekly schedule** (cron in UTC; see workflow file for local-time comment).
 
-   **Typical steps:** checkout → install frontend and backend dependencies → lint and test both → upload test/lint logs as the **`ci-test-logs`** artifact (retained for a set number of days).
+   **What it does:**
+   - Installs dependencies for `frontend/` and `backend/` (with a shared local composite action for DRY setup).
+   - Runs lint + tests for both packages.
+   - Uploads artifacts:
+     - `ci-test-logs` (stdout logs for lint + test)
+     - `backend-test-results` (JUnit XML: `backend/test-results.xml`)
 
 2. **`docker-build.yml` — Image build check**
 
    **Triggers:** push, pull request, `workflow_dispatch`.
 
-   Builds Compose images on a Linux runner using **placeholder** env values so **pull requests do not need production secrets**. Uploads **`docker-build-logs`**.
+   **What it does:**
+   - Runs `docker compose build` on a clean Linux runner (build validation, no containers started).
+   - Uses placeholder env values so pull requests do not require secrets.
+   - Uploads `docker-build-logs` (compose build output + image list).
 
 3. **`docker-publish.yml` — Publish images**
 
    **Triggers:** after **`CI`** completes successfully on `main` / `master` (`workflow_run`), or **manual** `workflow_dispatch`.
 
-   Builds and pushes **`cinecritic-frontend`** and **`cinecritic-backend`** to Artifact Registry with metadata tags (short SHA + `latest`).
+   **What it does:**
+   - Builds and pushes `cinecritic-frontend` and `cinecritic-backend` images to Artifact Registry.
+   - Tags images as:
+     - `sha-<short>` (traceable to a commit)
+     - `latest` (convenience)
 
 4. **`deploy-cloud-run.yml` — Deploy**
 
-   **Trigger:** **`workflow_dispatch` only** (manual). Deploys selected image tags to Cloud Run, sets backend env (database, JWT, TMDB, `NODE_ENV`), then deploys the frontend with **`VITE_API_BASE_URL`** set to the backend service URL.
+   **Trigger:** **`workflow_dispatch` only** (manual).
+
+   **What it does:**
+   - Deploys the backend image tag to Cloud Run and injects runtime env values.
+   - Captures the backend URL and sets `VITE_API_BASE_URL` when deploying the frontend service.
+   - Captures Cloud Run revision names and uploads a `deployment-summary` artifact.
 
 ### GitHub secrets (typical)
 
@@ -219,6 +262,15 @@ Do **not** commit real secrets. Local development uses `.env`; CI build jobs use
 1. Merge to `main` → CI passes → **Docker Publish** can push images.
 2. Run **Deploy Cloud Run** manually when you want a release: pick environment, region, and image tag.
 3. Backend URL is captured for the frontend build-time API base URL.
+
+### Example: deploy a specific build
+
+- Find an image tag in Artifact Registry (for example `sha-1a2b3c4`).
+- Run **Deploy Cloud Run** and set:
+  - `gcp_region`: `australia-southeast1` (or your region)
+  - `image_tag`: `sha-1a2b3c4`
+
+After the run, download the `deployment-summary` artifact from the workflow run to keep a record of the deployed revisions and backend URL.
 
 ### First-time Cloud Run setup
 
