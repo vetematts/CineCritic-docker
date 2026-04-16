@@ -68,9 +68,10 @@ jobs:
           DATABASE_SSL: "false"
           EOF
 
-          EXTRA_ARGS=""
-          if [ -n "${CLOUDSQL_CONNECTION_NAME:-}" ]; then
-            EXTRA_ARGS="--add-cloudsql-instances ${CLOUDSQL_CONNECTION_NAME}"
+          if [ -z "${CLOUDSQL_CONNECTION_NAME:-}" ]; then
+            echo "ERROR: CLOUDSQL_CONNECTION_NAME is not set." >&2
+            echo "Set it to: <project-id>:<region>:<instance-id> (e.g. cinecritic-493502:australia-southeast1:cinecritic-db)" >&2
+            exit 1
           fi
 
           gcloud run deploy "$BACKEND_SERVICE_NAME" \
@@ -79,7 +80,7 @@ jobs:
             --region "$DEPLOY_REGION" \
             --platform managed \
             --allow-unauthenticated \
-            $EXTRA_ARGS \
+            --add-cloudsql-instances "$CLOUDSQL_CONNECTION_NAME" \
             --env-vars-file backend-env.yaml
 
       - name: Capture backend revision
