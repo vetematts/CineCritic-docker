@@ -6,6 +6,10 @@
 
 **CineCritic** is a movie discovery and review platform: a React (Vite) frontend, a Node.js (Express) API, and PostgreSQL. TMDB powers movie metadata; the app stores users, reviews, watchlists, and favourites in Postgres.
 
+## Live demo
+
+- Frontend (Cloud Run): https://cinecritic-frontend-771267628014.australia-southeast1.run.app/
+
 This repository is the **canonical full-stack project**: `frontend/`, `backend/`, and Docker Compose live together. Earlier coursework used **separate** frontend and backend repos; this monorepo is the **definitive** version for local runs, CI/CD, and cloud deployment. **Docker Compose** is the supported way to run the whole stack on your machine.
 
 ## Contents
