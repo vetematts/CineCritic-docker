@@ -29,12 +29,6 @@ export default defineConfig([
     },
   },
   {
-    files: ['server/**/*.js'],
-    rules: {
-      'new-cap': ['error', { capIsNew: false }],
-    },
-  },
-  {
     files: ['tests/**/*.js'],
     languageOptions: {
       globals: {

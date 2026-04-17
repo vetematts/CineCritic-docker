@@ -14,7 +14,6 @@ import {
   getByIdHandler,
 } from '../controllers/moviesController.js';
 
-// eslint-disable-next-line new-cap
 const router = express.Router();
 
 const advancedSearchSchema = z.object({

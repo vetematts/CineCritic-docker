@@ -14,7 +14,6 @@ import {
   deleteUserHandler,
 } from '../controllers/usersController.js';
 
-// eslint-disable-next-line new-cap
 const router = express.Router();
 
 const createUserSchema = z.object({

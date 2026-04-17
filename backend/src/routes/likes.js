@@ -5,7 +5,6 @@ import { validate } from '../middlewares/validate.js';
 import { asyncHandler } from '../middlewares/asyncHandler.js';
 import { addMovieLikeHandler, removeMovieLikeHandler } from '../controllers/likesController.js';
 
-// eslint-disable-next-line new-cap
 const router = express.Router();
 
 const createLikeSchema = z.object({

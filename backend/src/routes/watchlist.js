@@ -10,7 +10,6 @@ import {
   deleteWatchlistHandler,
 } from '../controllers/watchlistController.js';
 
-// eslint-disable-next-line new-cap
 const router = express.Router();
 
 const watchlistCreateSchema = z.object({

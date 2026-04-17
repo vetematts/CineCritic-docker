@@ -6,7 +6,6 @@ import { getFavouritesPublicHandler } from '../controllers/favouritesController.
 import { getWatchlistPublicHandler } from '../controllers/watchlistController.js';
 import { getReviewsByUserPublicHandler } from '../controllers/reviewsController.js';
 
-// eslint-disable-next-line new-cap
 const router = express.Router();
 
 const userIdParams = z.object({

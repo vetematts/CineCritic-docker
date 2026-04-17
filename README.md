@@ -222,6 +222,8 @@ flowchart LR
      - `ci-test-logs` (stdout logs for lint + test)
      - `backend-test-results` (JUnit XML: `backend/test-results.xml`)
 
+   ![CI workflow success](./docs/screenshots/CI.png)
+
 2. **`docker-build.yml` — Image build check**
 
    **Triggers:** push, pull request, `workflow_dispatch`.
@@ -230,6 +232,8 @@ flowchart LR
    - Runs `docker compose build` on a clean Linux runner (build validation, no containers started).
    - Uses placeholder env values so pull requests do not require secrets.
    - Uploads `docker-build-logs` (compose build output + image list).
+
+   ![Docker Build workflow success](./docs/screenshots/Docker%20Build.png)
 
 3. **`docker-publish.yml` — Publish images**
 
@@ -241,6 +245,8 @@ flowchart LR
      - `sha-<short>` (traceable to a commit)
      - `latest` (convenience)
 
+   ![Docker Publish workflow success](./docs/screenshots/Docker%20Publish.png)
+
 4. **`deploy-cloud-run.yml` — Deploy**
 
    **Trigger:** **`workflow_dispatch` only** (manual).
@@ -249,6 +255,8 @@ flowchart LR
    - Deploys the backend image tag to Cloud Run and injects runtime env values.
    - Captures the backend URL and sets `VITE_API_BASE_URL` when deploying the frontend service.
    - Captures Cloud Run revision names and uploads a `deployment-summary` artifact.
+
+   ![Deploy Cloud Run workflow success](./docs/screenshots/Deploy%20Cloud%20Run.png)
 
 ### GitHub secrets (typical)
 
@@ -292,7 +300,9 @@ The workflow sets **`VITE_API_BASE_URL`** on the frontend service to the deploye
 
 ### Evidence (CI/CD screenshots)
 
-Screenshots live in `docs/screenshots/` (placeholder until added).
+Combined workflow overview:
+
+![All workflow runs](./docs/screenshots/AllWorkflows.png)
 
 ---
 

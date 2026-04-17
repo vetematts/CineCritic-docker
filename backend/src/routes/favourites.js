@@ -11,7 +11,6 @@ import {
   getFavouritesHandler,
 } from '../controllers/favouritesController.js';
 
-// eslint-disable-next-line new-cap
 const router = express.Router();
 
 const favouritesCreateSchema = z.object({

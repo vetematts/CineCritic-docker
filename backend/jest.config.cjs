@@ -1,14 +1,13 @@
 module.exports = {
-  testEnvironment: "node",
+  testEnvironment: 'node',
   reporters: [
-    "default",
+    'default',
     [
-      "jest-junit",
+      'jest-junit',
       {
-        outputDirectory: ".",
-        outputName: "test-results.xml",
+        outputDirectory: '.',
+        outputName: 'test-results.xml',
       },
     ],
   ],
 };
-
