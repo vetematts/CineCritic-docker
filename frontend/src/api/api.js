@@ -1,7 +1,5 @@
 const runtimeBaseUrl =
-  typeof window !== 'undefined'
-    ? window.__CINECRITIC_RUNTIME__?.VITE_API_BASE_URL
-    : undefined;
+  typeof window !== 'undefined' ? window.__CINECRITIC_RUNTIME__?.VITE_API_BASE_URL : undefined;
 
 const API_BASE_URL = runtimeBaseUrl || import.meta.env.VITE_API_BASE_URL || '';
 

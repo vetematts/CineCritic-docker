@@ -34,11 +34,11 @@ jobs:
 
       - name: Lint frontend
         working-directory: frontend
-        run: npm run lint 2>&1 | tee ../ci-artifacts/test-logs/frontend-lint.log
+        run: set -o pipefail && npm run lint 2>&1 | tee ../ci-artifacts/test-logs/frontend-lint.log
 
       - name: Test frontend
         working-directory: frontend
-        run: npm test -- --run --reporter=verbose 2>&1 | tee ../ci-artifacts/test-logs/frontend-vitest.log
+        run: set -o pipefail && npm test -- --run --reporter=verbose 2>&1 | tee ../ci-artifacts/test-logs/frontend-vitest.log
 
       - name: Install backend deps
         uses: ./.github/actions/node-install
@@ -47,11 +47,11 @@ jobs:
 
       - name: Lint backend
         working-directory: backend
-        run: npm run lint 2>&1 | tee ../ci-artifacts/test-logs/backend-lint.log
+        run: set -o pipefail && npm run lint 2>&1 | tee ../ci-artifacts/test-logs/backend-lint.log
 
       - name: Test backend
         working-directory: backend
-        run: npm test 2>&1 | tee ../ci-artifacts/test-logs/backend-jest.log
+        run: set -o pipefail && npm test 2>&1 | tee ../ci-artifacts/test-logs/backend-jest.log
 
       - name: Upload backend test report (JUnit XML)
         if: always()
