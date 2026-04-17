@@ -200,7 +200,7 @@ Automation uses **GitHub Actions**: lint and test the apps, verify Docker builds
      - `ci-test-logs` (stdout logs for lint + test)
      - `backend-test-results` (JUnit XML: `backend/test-results.xml`)
 
-   ![CI workflow success](./docs/screenshots/CI.png)
+   ![CI workflow success](./docs/screenshots/CI%20workflow%20run.png)
 
 2. **`docker-build.yml` — Image build check**
 
@@ -211,7 +211,7 @@ Automation uses **GitHub Actions**: lint and test the apps, verify Docker builds
    - Uses placeholder env values so pull requests do not require secrets.
    - Uploads `docker-build-logs` (compose build output + image list).
 
-   ![Docker Build workflow success](./docs/screenshots/Docker%20Build.png)
+   ![Docker Build workflow success](./docs/screenshots/Docker%20Build%20workflow.png)
 
 3. **`docker-publish.yml` — Publish images**
 
@@ -223,7 +223,7 @@ Automation uses **GitHub Actions**: lint and test the apps, verify Docker builds
      - `sha-<short>` (traceable to a commit)
      - `latest` (convenience)
 
-   ![Docker Publish workflow success](./docs/screenshots/Docker%20Publish.png)
+   ![Docker Publish workflow success](./docs/screenshots/Docker%20Publish%20workflow.png)
 
 4. **`deploy-cloud-run.yml` — Deploy**
 
@@ -234,7 +234,7 @@ Automation uses **GitHub Actions**: lint and test the apps, verify Docker builds
    - Captures the backend URL and sets `VITE_API_BASE_URL` when deploying the frontend service.
    - Captures Cloud Run revision names and uploads a `deployment-summary` artifact.
 
-   ![Deploy Cloud Run workflow success](./docs/screenshots/Deploy%20Cloud%20Run.png)
+   ![Deploy Cloud Run workflow success](./docs/screenshots/Deploy%20Cloud%20Run%20workflow%20Summary.png)
 
 ### GitHub secrets (typical)
 
@@ -278,9 +278,29 @@ The workflow sets **`VITE_API_BASE_URL`** on the frontend service to the deploye
 
 ### Evidence (CI/CD screenshots)
 
-Combined workflow overview:
+Selected evidence from CI/CD runs and the deployed GCP resources:
 
-![All workflow runs](./docs/screenshots/AllWorkflows.png)
+1. CI workflow run (green)
+   ![CI workflow run](./docs/screenshots/CI%20workflow%20run.png)
+
+2. Backend tests passing
+   ![Backend tests passing](./docs/screenshots/CI%20-%20backend%20tests%20passing.png)
+
+3. CI artifacts panel (JUnit XML + logs)
+   ![CI artifacts panel](./docs/screenshots/CI%20-%20Artifacts%20panel.png)
+
+4. Docker Publish workflow run (frontend + backend)
+   ![Docker Publish workflow](./docs/screenshots/Docker%20Publish%20workflow.png)
+
+5. Artifact Registry tags/digests
+   ![Artifact Registry backend](./docs/screenshots/Artifact%20Registry%20-%20Backend%20log.png)
+   ![Artifact Registry frontend](./docs/screenshots/Artifact%20Registry%20-%20Frontend%20log.png)
+
+6. Deploy Cloud Run workflow run
+   ![Deploy Cloud Run workflow summary](./docs/screenshots/Deploy%20Cloud%20Run%20workflow%20Summary.png)
+
+7. Cloud Run services (frontend + backend)
+   ![Cloud Run services page](./docs/screenshots/Cloud%20Run%20services%20page.png)
 
 ---
 
