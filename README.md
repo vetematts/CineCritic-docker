@@ -173,29 +173,7 @@ Automation uses **GitHub Actions**: lint and test the apps, verify Docker builds
 
 ### Deployment architecture
 
-```mermaid
-flowchart LR
-  Dev[Developer] -->|push / PR| Repo[GitHub repo]
-
-  subgraph GA[GitHub Actions]
-    CI[CI\nlint + tests\nartifacts] --> PUB[Docker Publish\npush images]
-    CI --> BUILD[Docker Build\ncompose build check]
-    DEP[Deploy Cloud Run\nmanual]:::manual
-  end
-
-  Repo --> CI
-  CI --> PUB
-  PUB --> AR[Artifact Registry\ncinecritic-frontend + cinecritic-backend\nlatest + sha-* tags]
-  AR --> DEP
-
-  subgraph CR[Cloud Run]
-    FE[frontend service\nVITE_API_BASE_URL] -->|HTTPS| BE[backend service\nDATABASE_URL, JWT_SECRET,\nTMDB_API_KEY]
-  end
-
-  User[User browser] -->|HTTPS| FE
-  BE -->|SQL| DB[(Postgres)]
-  BE -->|HTTPS| TMDB[TMDB API]
-```
+![Deployment architecture diagram](./docs/CineCloud.drawio.png)
 
 ### Tools used
 

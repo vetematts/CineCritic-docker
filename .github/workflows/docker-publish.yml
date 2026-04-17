@@ -7,6 +7,9 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   publish-images:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
@@ -14,9 +17,11 @@ jobs:
     permissions:
       contents: read
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       GCP_AR_REGION: ${{ secrets.GCP_ARTIFACT_REGISTRY_REGION }}
       GCP_AR_REPOSITORY: ${{ secrets.GCP_ARTIFACT_REGISTRY_REPOSITORY }}
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      AR_HOST: ${{ secrets.GCP_ARTIFACT_REGISTRY_REGION }}-docker.pkg.dev
     strategy:
       matrix:
         include:
@@ -32,9 +37,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-
-      - name: Set Artifact Registry host
-        run: echo "AR_HOST=${GCP_AR_REGION}-docker.pkg.dev" >> "$GITHUB_ENV"
 
       - uses: docker/setup-buildx-action@v3
 
