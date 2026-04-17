@@ -11,7 +11,8 @@ const compat = new FlatCompat({ baseDirectory: __dirname });
 
 export default defineConfig([
   globalIgnores(['dist', '.venv']),
-  ...compat.extends('google', 'plugin:prettier/recommended'),
+  // Keep config ESLint v9 compatible (eslint-config-google still references removed core rules).
+  ...compat.extends('plugin:prettier/recommended'),
   {
     files: ['**/*.js'],
     extends: [js.configs.recommended],
@@ -24,9 +25,6 @@ export default defineConfig([
       },
     },
     rules: {
-      // Disable deprecated Google rules removed in ESLint v9.
-      'valid-jsdoc': 'off',
-      'require-jsdoc': 'off',
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
